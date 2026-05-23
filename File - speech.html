@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech - Voice Selector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .powered-by {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .voice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .voice-btn {
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            color: #555;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .voice-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .voice-btn.active {
+            border-color: #764ba2;
+            background: #f3e8ff;
+            color: #764ba2;
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.2);
+        }
+
+        .voice-icon {
+            font-size: 1.4rem;
+        }
+
+        .voice-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .voice-name {
+            font-weight: 600;
+        }
+
+        .voice-lang {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .char-count {
+            text-align: right;
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 6px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .audio-container {
+            margin-top: 24px;
+            display: none;
+        }
+
+        .audio-container.show {
+            display: block;
+        }
+
+        audio {
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        .download-btn {
+            margin-top: 12px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .recording-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse {
+            width: 10px;
+            height: 10px;
+            background: #f44336;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .speed-control {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .speed-control label {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .speed-control input[type="range"] {
+            width: 150px;
+            accent-color: #667eea;
+        }
+
+        .speed-value {
+            color: #667eea;
+            font-weight: 600;
+            min-width: 40px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 24px 0;
+        }
+
+        .developed-by {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .voice-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="powered-by">Powered by: The Real Estate Network</div>
+        
+        <h1>🎙️ Text to Speech</h1>
+        <p class="subtitle">Select a voice and type your text</p>
+
+        <div class="voice-grid" id="voiceGrid">
+            <button class="voice-btn active" data-voice="US English Male" onclick="setVoice('US English Male', 'David')">
+                <span class="voice-icon">👨</span>
+                <div class="voice-details">
+                    <span class="voice-name">David</span>
+                    <span class="voice-lang">English (US) - Male</span>
+                </div>
+            </button>
+            <button class="voice-btn" data-voice="US English Female" onclick="setVoice('US English Female', 'Kylie')">
+                <span class="voice-icon">👩</span>
+                <div class="voice-details">
+                    <span class="voice-name">Kylie</span>
+                    <span class="voice-lang">English (US) - Female</span>
+                </div>
+            </button>
+            <button class="voice-btn" data-voice="UK English Male" onclick="setVoice('UK English Male', 'Mario')">
+                <span class="voice-icon">👨</span>
+                <div class="voice-details">
+                    <span class="voice-name">Mario</span>
+                    <span class="voice-lang">English (UK) - Male for Tagalog</span>
+                </div>
+            </button>
+            <button class="voice-btn" data-voice="Filipino Female" onclick="setVoice('Filipino Female', 'Petra')">
+                <span class="voice-icon">👩</span>
+                <div class="voice-details">
+                    <span class="voice-name">Petra</span>
+                    <span class="voice-lang">Filipino - Female</span>
+                </div>
+            </button>
+        </div>
+
+        <div class="speed-control">
+            <label>Speed:</label>
+            <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.1" value="1" oninput="updateSpeed(this.value)">
+            <span class="speed-value" id="speedValue">1.0x</span>
+        </div>
+
+        <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+        <div class="char-count"><span id="charCount">0</span> characters</div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="speakBtn" onclick="speak()">
+                <span>▶️</span> Speak
+            </button>
+            <button class="btn btn-secondary" id="recordBtn" onclick="toggleRecord()" disabled>
+                <span id="recordIcon">⏺️</span> <span id="recordText">Record & Download</span>
+            </button>
+            <button class="btn btn-secondary" onclick="clearText()">
+                <span>🗑️</span> Clear
+            </button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="audio-container" id="audioContainer">
+            <div class="divider"></div>
+            <audio id="audioPlayer" controls></audio>
+        </div>
+
+        <div class="developed-by">Developed by: Torch Castro</div>
+    </div>
+
+    <script src="https://code.responsivevoice.org/responsivevoice.js"></script>
+
+    <script>
+        let currentVoice = 'US English Male';
+        let currentDisplayName = 'David';
+        let speechSpeed = 1;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let audioBlob = null;
+        let isResponsiveVoiceReady = false;
+
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const status = document.getElementById('status');
+        const recordBtn = document.getElementById('recordBtn');
+
+        textInput.addEventListener('input', () => {
+            charCount.textContent = textInput.value.length;
+        });
+
+        function setVoice(voiceName, displayName) {
+            // Cancel any ongoing speech to prevent voice caching/sticking issues
+            if (typeof responsiveVoice !== 'undefined') {
+                responsiveVoice.cancel();
+            }
+            
+            currentVoice = voiceName;
+            currentDisplayName = displayName;
+            
+            document.querySelectorAll('.voice-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.voice === voiceName);
+            });
+        }
+
+        function updateSpeed(val) {
+            speechSpeed = parseFloat(val);
+            document.getElementById('speedValue').textContent = val + 'x';
+        }
+
+        function showStatus(msg, type = 'info') {
+            status.textContent = msg;
+            status.className = 'status show ' + type;
+            setTimeout(() => status.classList.remove('show'), 5000);
+        }
+
+        function checkEngine() {
+            if (typeof responsiveVoice !== 'undefined') {
+                isResponsiveVoiceReady = true;
+                recordBtn.disabled = false;
+            } else {
+                showStatus('Failed to load TTS engine. Check internet connection.', 'error');
+            }
+        }
+
+        function speak() {
+            const text = textInput.value.trim();
+            if (!text) {
+                showStatus('Please enter some text first!', 'error');
+                return;
+            }
+
+            if (!isResponsiveVoiceReady) {
+                showStatus('TTS engine not ready yet. Please wait or refresh.', 'error');
+                return;
+            }
+
+            // Hard cancel to clear any cached voice state
+            responsiveVoice.cancel();
+
+            showStatus('Speaking with ' + currentDisplayName + '...', 'info');
+            recordBtn.disabled = false;
+
+            // Use a small delay after cancel to ensure voice switch happens
+            setTimeout(() => {
+                responsiveVoice.speak(text, currentVoice, {
+                    rate: speechSpeed,
+                    pitch: 1,
+                    volume: 1,
+                    onstart: () => {
+                        showStatus('Speaking with ' + currentDisplayName + '...', 'info');
+                    },
+                    onend: () => {
+                        showStatus('Finished speaking!', 'success');
+                    },
+                    onerror: (e) => {
+                        showStatus('Speech error: ' + e, 'error');
+                    }
+                });
+            }, 50);
+        }
+
+        async function toggleRecord() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                });
+
+                const mimeTypes = [
+                    'audio/webm;codecs=opus',
+                    'audio/webm',
+                    'audio/mp4',
+                    'audio/ogg'
+                ];
+                
+                let selectedMime = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
+
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: selectedMime,
+                    audioBitsPerSecond: 128000
+                });
+
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: selectedMime || 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    audioPlayer.src = audioUrl;
+                    
+                    document.getElementById('audioContainer').classList.add('show');
+                    showStatus('Recording complete! You can now download the audio.', 'success');
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start(100);
+                isRecording = true;
+                
+                document.getElementById('recordIcon').textContent = '⏹️';
+                document.getElementById('recordText').innerHTML = '<span class="recording-indicator"><span class="pulse"></span> Recording...</span>';
+                recordBtn.classList.add('btn-primary');
+                recordBtn.classList.remove('btn-secondary');
+                
+                showStatus('Recording started! Speak now...', 'info');
+
+                setTimeout(() => {
+                    const text = textInput.value.trim();
+                    if (text && isResponsiveVoiceReady) {
+                        responsiveVoice.cancel();
+                        setTimeout(() => {
+                            responsiveVoice.speak(text, currentVoice, {
+                                rate: speechSpeed,
+                                pitch: 1,
+                                volume: 1,
+                                onend: () => {
+                                    setTimeout(() => stopRecording(), 500);
+                                }
+                            });
+                        }, 50);
+                    }
+                }, 300);
+
+            } catch (err) {
+                showStatus('Microphone access denied or not available: ' + err.message, 'error');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+            
+            document.getElementById('recordIcon').textContent = '⏺️';
+            document.getElementById('recordText').textContent = 'Record & Download';
+            recordBtn.classList.remove('btn-primary');
+            recordBtn.classList.add('btn-secondary');
+        }
+
+        function downloadAudio() {
+            if (!audioBlob) {
+                showStatus('No audio recorded yet!', 'error');
+                return;
+            }
+
+            const text = textInput.value.trim().substring(0, 30).replace(/[^a-z0-9]/gi, '_') || 'speech';
+            const voiceLabel = currentDisplayName;
+            
+            const extension = audioBlob.type.includes('mp4') ? 'm4a' : 'webm';
+            const filename = `${text}_${voiceLabel}.${extension}`;
+            
+            const url = URL.createObjectURL(audioBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus(`Downloaded as ${extension.toUpperCase()}`, 'success');
+        }
+
+        function clearText() {
+            textInput.value = '';
+            charCount.textContent = '0';
+            document.getElementById('audioContainer').classList.remove('show');
+            if (isResponsiveVoiceReady) responsiveVoice.cancel();
+            if (isRecording) stopRecording();
+            audioBlob = null;
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(checkEngine, 1000);
+        });
+    </script>
+</body>
+</html>
